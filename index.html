@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة المافيا السرية - النسخة الاحترافية</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- 1. الشاشة الرئيسية -->
+        <section id="screen-home" class="screen active">
+            <h1 class="game-title">MAFIA</h1>
+            <p class="game-subtitle">النسخة السريّة الاحترافية الموّحدة</p>
+            
+            <div class="menu-buttons">
+                <button onclick="changeScreen('screen-setup')" class="btn btn-primary">لعبة جديدة</button>
+                <button id="btn-resume" onclick="resumeGame()" class="btn btn-secondary hidden">متابعة اللعبة السابقة</button>
+            </div>
+
+            <div class="developer-signature">
+                تم التصميم والتطوير بواسطة <span class="dev-name">مازن الشمساني</span> ✨
+            </div>
+        </section>
+
+        <!-- 2. شاشة الإعدادات -->
+        <section id="screen-setup" class="screen">
+            <h2>إعدادات اللعبة</h2>
+            <div class="setup-card scrollable">
+                <label>عدد اللاعبين (4 - 20):</label>
+                <input type="number" id="player-count" min="4" max="20" value="5" onchange="generatePlayerInputs()">
+                
+                <div id="players-names-container">
+                    <!-- حقول الأسماء التلقائية -->
+                </div>
+
+                <div class="roles-setup">
+                    <h3>توزيع الأدوار الخاصة</h3>
+                    <div class="role-option">
+                        <label>عدد المافيا 🥷:</label>
+                        <input type="number" id="mafia-count" min="1" max="5" value="2">
+                    </div>
+                    <div class="role-option">
+                        <label>عدد الأطباء 🩺:</label>
+                        <input type="number" id="doctor-count" min="0" max="5" value="1">
+                    </div>
+                    <div class="role-option">
+                        <label>عدد المحققين 🔍:</label>
+                        <input type="number" id="detective-count" min="0" max="5" value="1">
+                    </div>
+                </div>
+            </div>
+            <button onclick="startGame()" class="btn btn-primary top-space">ابدأ اللعبة وزّع الأدوار</button>
+            <button onclick="changeScreen('screen-home')" class="btn btn-danger">إلغاء</button>
+        </section>
+
+        <!-- 3. شاشة كشف الأدوار -->
+        <section id="screen-reveal" class="screen">
+            <h2>توزيع الأدوار السريّة</h2>
+            <div class="pass-card">
+                <p>قم بتسليم الهاتف إلى اللاعب:</p>
+                <h3 id="next-player-name" class="highlight-name">اسم اللاعب</h3>
+                <button id="btn-reveal-action" onclick="revealRole()" class="btn btn-primary">اِكشف كارت الهوية</button>
+            </div>
+
+            <!-- كارت الدور الرئيسي -->
+            <div id="role-card-display" class="game-card-wrapper hidden animate-pop">
+                <div id="role-card-inner" class="game-card">
+                    <div class="card-icon" id="role-icon">👤</div>
+                    <h2 id="role-name">مواطن</h2>
+                    <p id="role-desc">وصف الدور...</p>
+                </div>
+                <button onclick="confirmRoleSeen()" class="btn btn-secondary top-space">فهمت، اخفِ الكارت ومرر الهاتف</button>
+            </div>
+        </section>
+
+        <!-- 4. شاشة الليل المتسلسة -->
+        <section id="screen-night" class="screen">
+            <h2>جولة الليل السرية 🌙</h2>
+            <div class="pass-card" id="night-pass-container">
+                <p>مرر الهاتف بالترتيب إلى اللاعب الحي:</p>
+                <h3 id="night-player-name" class="highlight-name">اسم اللاعب</h3>
+                <button onclick="revealNightAction()" class="btn btn-primary">أنا اللاعب، افتح خياراتي</button>
+            </div>
+
+            <div id="night-action-wrapper" class="hidden flex-container">
+                <h3 id="night-action-title">ماذا تريد أن تفعل؟</h3>
+                <div id="team-reveal-box" class="team-box hidden"></div>
+                
+                <!-- حاوية الأسماء بشكل عمودي ممتد للّيل -->
+                <div id="night-action-container" class="players-list-vertical scrollable-list">
+                    <!-- أزرار الأهداف قائمة رأسية -->
+                </div>
+                <button id="btn-confirm-night" class="btn btn-primary top-space" onclick="confirmNightAction()">تأكيد وإغلاق الشاشة</button>
+            </div>
+        </section>
+
+        <!-- 5. شاشة النهار والتقرير -->
+        <section id="screen-day" class="screen">
+            <h2>شروق الشمس ☀️</h2>
+            <h3 id="day-round-number">الجولة: 1</h3>
+            
+            <div class="day-report-card">
+                <h3>تقرير أحداث الليل:</h3>
+                <p id="day-report-text">جاري الحساب...</p>
+            </div>
+
+            <h3>اللاعبين الأحياء في المدينة:</h3>
+            <div id="alive-players-list" class="players-list-vertical scrollable-list">
+                <!-- قائمة الأحياء نهاراً -->
+            </div>
+
+            <button onclick="startVotingPhase()" class="btn btn-danger top-space">الانتقال إلى محكمة التصويت ⚖️</button>
+        </section>
+
+        <!-- 6. شاشة التصويت السري الفردي -->
+        <section id="screen-voting" class="screen">
+            <h2>صندوق التصويت السري ⚖️</h2>
+            <div class="pass-card" id="voting-pass-container">
+                <p>حان دورك للتصويت سرياً، مرر الهاتف إلى:</p>
+                <h3 id="voter-player-name" class="highlight-name">اسم المصوّت</h3>
+                <button onclick="revealVotingOptions()" class="btn btn-primary">افتح ورقة التصويت</button>
+            </div>
+
+            <div id="voting-options-wrapper" class="hidden flex-container">
+                <p>اِختر الشخص الذي تشتبه به لإقصائه:</p>
+                <!-- حاوية الأسماء بشكل عمودي ممتد للتصويت النهارى -->
+                <div id="voting-choices-container" class="players-list-vertical scrollable-list">
+                    <!-- خيارات التصويت قائمة رأسية -->
+                </div>
+                
+                <div class="voting-actions-row top-space">
+                    <button id="btn-confirm-vote" onclick="submitVote(true)" class="btn btn-confirm disabled" disabled>🎯 تأكيد التصويت</button>
+                    <button onclick="submitVote(false)" class="btn btn-skip">⚖️ امتناع</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. شاشة الفوز والنتائج -->
+        <section id="screen-victory" class="screen">
+            <h1 id="victory-title" class="victory-text">فوز المافيا!</h1>
+            <div class="victory-card scrollable">
+                <h3>سجل مجريات وتاريخ اللعبة:</h3>
+                <div id="history-log-container"></div>
+            </div>
+            <button onclick="resetToHome()" class="btn btn-primary top-space">العودة للرئيسية</button>
+        </section>
+
+        <!-- واجهة الصناديق المنبثقة الموحدة -->
+        <div id="game-modal" class="popup-overlay hidden">
+            <div class="popup-card animate-pop" id="game-modal-card">
+                <div class="popup-icon" id="game-modal-icon">🔔</div>
+                <h3 id="game-modal-title">عنوان التنبيه</h3>
+                <p id="game-modal-text">محتوى التنبيه يظهر هنا...</p>
+                <button id="game-modal-btn" onclick="closeGameModal()" class="btn btn-primary">متابعة</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
